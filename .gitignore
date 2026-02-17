@@ -1,0 +1,13 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+
+*.pyc
+__pycache__/
+db.sqlite3
+.env
+*.log
+media/
+.venv/
