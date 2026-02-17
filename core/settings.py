@@ -1,24 +1,17 @@
-"""Django settings for core project.
+"""Django settings for core project."""
 
-This module contains all configuration for the Django project including
-database settings, installed apps, middleware, and REST framework configuration.
-"""
-
-# Standard library imports
+# Standard library
 import os
 from pathlib import Path
 
-# Third-party imports
+# Third-party
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security settings
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-insecure-key-for-dev')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-insecure-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = []
 
@@ -29,12 +22,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    # Third party
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'django_filters',
-    
+    # Own apps
     'accounts_app',
     'offers_app',
     'orders_app',
@@ -80,18 +73,10 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 LANGUAGE_CODE = 'en-us'
@@ -100,21 +85,15 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model
 AUTH_USER_MODEL = 'accounts_app.User'
 
-# CORS Settings (development only!)
 CORS_ALLOW_ALL_ORIGINS = True
 
-# REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
