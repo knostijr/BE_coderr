@@ -1,10 +1,9 @@
-"""URL routing for accounts_app API."""
+"""URL configuration for accounts app."""
 
-# Third-party
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+# Third-party imports
+from django.urls import path
 
-# Local
+# Local imports
 from .views import (
     LoginView,
     ProfileBusinessListView,
@@ -15,13 +14,14 @@ from .views import (
 
 app_name = 'accounts_app'
 
-router = DefaultRouter()
-router.register(r'profile', ProfileViewSet, basename='profile')
-
 urlpatterns = [
     path('registration/', RegistrationView.as_view(), name='registration'),
     path('login/', LoginView.as_view(), name='login'),
+    path(
+        'profile/<int:pk>/',
+        ProfileViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'}),
+        name='profile-detail'
+    ),
     path('profiles/business/', ProfileBusinessListView.as_view(), name='profile-business'),
     path('profiles/customer/', ProfileCustomerListView.as_view(), name='profile-customer'),
-    path('', include(router.urls)),
 ]

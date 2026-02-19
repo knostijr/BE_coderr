@@ -1,6 +1,6 @@
-"""Serializers for accounts_app."""
+"""Serializers for authentication and user profiles."""
 
-# Third-party
+# Third-party imports
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
@@ -11,24 +11,18 @@ User = get_user_model()
 class RegistrationSerializer(serializers.ModelSerializer):
     """Serializer for user registration.
 
-    Validates that password and repeated_password match.
-    Creates user with hashed password.
-
-    Fields:
-        username (str): Unique username.
-        email (str): Email address (required).
-        password (str): Password (write-only).
-        repeated_password (str): Confirmation (write-only).
-        type (str): 'customer' or 'business' (optional).
+    Validates matching passwords and creates user with hashed password.
     """
 
     password = serializers.CharField(
-        write_only=True, required=True,
+        write_only=True,
+        required=True,
         validators=[validate_password],
         style={'input_type': 'password'}
     )
     repeated_password = serializers.CharField(
-        write_only=True, required=True,
+        write_only=True,
+        required=True,
         style={'input_type': 'password'}
     )
 
@@ -37,20 +31,20 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'password', 'repeated_password', 'type']
         extra_kwargs = {
             'email': {'required': True},
-            'type': {'required': False}
+            'type': {'required': False},
         }
 
     def validate(self, attrs):
         """Validate that both password fields match.
 
         Args:
-            attrs (dict): Field values.
+            attrs (dict): Input field values.
 
         Returns:
             dict: Validated attributes.
 
         Raises:
-            ValidationError: If passwords don't match.
+            serializers.ValidationError: If passwords do not match.
         """
         if attrs['password'] != attrs['repeated_password']:
             raise serializers.ValidationError(
@@ -59,13 +53,13 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        """Create user with hashed password and type.
+        """Create new user with hashed password.
 
         Args:
-            validated_data (dict): Validated data.
+            validated_data (dict): Validated data from serializer.
 
         Returns:
-            User: New user instance.
+            User: Newly created user instance.
         """
         validated_data.pop('repeated_password')
         return User.objects.create_user(
@@ -77,31 +71,22 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    """Serializer for login credentials.
-
-    Fields:
-        username (str): Username.
-        password (str): Password (write-only).
-    """
+    """Serializer for user login credentials."""
 
     username = serializers.CharField(required=True)
     password = serializers.CharField(
-        required=True, write_only=True,
+        required=True,
+        write_only=True,
         style={'input_type': 'password'}
     )
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile data.
+    """Serializer for reading and updating user profiles.
 
-    Uses 'user' as ID field name per API spec.
-    All string fields return empty string instead of null.
-
-    Fields:
-        user (int): User ID (source=id, read-only).
-        username, first_name, last_name, file, location,
-        tel, description, working_hours, type, email,
-        created_at (read-only).
+    Uses 'user' as ID field per endpoint documentation.
+    String fields never return null, defaults to empty string.
+    Does NOT include updated_at per endpoint documentation.
     """
 
     user = serializers.IntegerField(source='id', read_only=True)
@@ -109,8 +94,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'user', 'username', 'first_name', 'last_name',
-            'file', 'location', 'tel', 'description',
-            'working_hours', 'type', 'email', 'created_at',
+            'user',
+            'username',
+            'first_name',
+            'last_name',
+            'file',
+            'location',
+            'tel',
+            'description',
+            'working_hours',
+            'type',
+            'email',
+            'created_at',
         ]
-        read_only_fields = ['user', 'created_at']
+        read_only_fields = ['user', 'username', 'created_at']

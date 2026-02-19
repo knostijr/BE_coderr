@@ -1,22 +1,22 @@
-"""User model for accounts_app."""
+"""User model for accounts app."""
 
-# Third-party
+# Third-party imports
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
 class User(AbstractUser):
-    """Custom user model with type, profile picture, and profile fields.
+    """Custom user model with type and profile fields.
 
     Attributes:
-        type (str): 'customer' or 'business'.
-        file (ImageField): Profile picture (optional).
-        location (str): Location, never null (default='').
-        tel (str): Phone number, never null (default='').
-        description (str): Bio, never null (default='').
-        working_hours (str): Working hours, never null (default='').
-        created_at (datetime): Auto-set on creation.
-        updated_at (datetime): Auto-set on update.
+        type (str): User type - 'customer' or 'business'.
+        file (ImageField): Optional profile picture.
+        location (str): User location, defaults to empty string.
+        tel (str): Phone number, defaults to empty string.
+        description (str): Profile description, defaults to empty string.
+        working_hours (str): Working hours info, defaults to empty string.
+        created_at (datetime): Account creation timestamp.
+        updated_at (datetime): Last update timestamp (internal use only).
     """
 
     USER_TYPE_CHOICES = [
@@ -47,5 +47,9 @@ class User(AbstractUser):
         ordering = ['-created_at']
 
     def __str__(self):
-        """Return username as string representation."""
+        """Return username as string representation.
+
+        Returns:
+            str: The username.
+        """
         return self.username

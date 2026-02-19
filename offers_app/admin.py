@@ -1,14 +1,14 @@
-"""Admin configuration for offers_app."""
+"""Admin configuration for offers app."""
 
-# Third-party
+# Third-party imports
 from django.contrib import admin
 
-# Local
+# Local imports
 from .models import Offer, OfferDetail
 
 
 class OfferDetailInline(admin.TabularInline):
-    """Inline editor for offer packages."""
+    """Inline admin for offer packages."""
 
     model = OfferDetail
     extra = 1
@@ -17,17 +17,16 @@ class OfferDetailInline(admin.TabularInline):
 
 @admin.register(Offer)
 class OfferAdmin(admin.ModelAdmin):
-    """Admin for Offer model with inline packages."""
+    """Admin interface for Offer model."""
 
     list_display = ['title', 'user', 'created_at']
-    list_filter = ['created_at']
     search_fields = ['title', 'description']
     inlines = [OfferDetailInline]
 
 
 @admin.register(OfferDetail)
 class OfferDetailAdmin(admin.ModelAdmin):
-    """Admin for OfferDetail model."""
+    """Admin interface for OfferDetail model."""
 
     list_display = ['offer', 'offer_type', 'price', 'delivery_time_in_days']
     list_filter = ['offer_type']

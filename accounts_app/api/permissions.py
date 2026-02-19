@@ -1,26 +1,26 @@
-"""Custom permissions for accounts_app."""
+"""Custom permissions for accounts app."""
 
-# Third-party
+# Third-party imports
 from rest_framework import permissions
 
 
-class IsOwnerOrReadOnly(permissions.BasePermission):
+class IsProfileOwner(permissions.BasePermission):
     """Allow only the profile owner to edit their profile.
 
-    Safe methods (GET, HEAD, OPTIONS) are allowed for all
-    authenticated users. Write methods only for the owner.
+    Read access is granted to all authenticated users.
+    Write access is restricted to the profile owner only.
     """
 
     def has_object_permission(self, request, view, obj):
-        """Check if user owns this object.
+        """Check if requesting user owns this profile.
 
         Args:
-            request: HTTP request.
-            view: View being accessed.
-            obj: User object.
+            request: The incoming HTTP request.
+            view: The view being accessed.
+            obj: The User object being accessed.
 
         Returns:
-            bool: True if permitted.
+            bool: True if read-only or user is the owner.
         """
         if request.method in permissions.SAFE_METHODS:
             return True

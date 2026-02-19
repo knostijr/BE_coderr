@@ -1,21 +1,12 @@
-"""Models for freelancer offers and offer packages."""
+"""Models for the offers app."""
 
-# Third-party
+# Third-party imports
 from django.conf import settings
 from django.db import models
 
 
 class Offer(models.Model):
-    """A freelancer service offer with up to 3 packages.
-
-    Attributes:
-        user (ForeignKey): Creator of the offer (business user).
-        title (str): Offer title.
-        image (ImageField): Offer image (optional).
-        description (str): Detailed description.
-        created_at (datetime): Auto-set on creation.
-        updated_at (datetime): Auto-set on update.
-    """
+    """A freelancer service offer with multiple packages."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -34,22 +25,16 @@ class Offer(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        """Return offer title."""
+        """Return offer title.
+
+        Returns:
+            str: The offer title.
+        """
         return self.title
 
 
 class OfferDetail(models.Model):
-    """A package tier for an offer (basic, standard, or premium).
-
-    Attributes:
-        offer (ForeignKey): Parent offer.
-        title (str): Package title.
-        revisions (int): Number of revisions.
-        delivery_time_in_days (int): Delivery time.
-        price (Decimal): Package price.
-        features (JSONField): List of included features.
-        offer_type (str): 'basic', 'standard', or 'premium'.
-    """
+    """A specific package tier for an offer (basic/standard/premium)."""
 
     OFFER_TYPE_CHOICES = [
         ('basic', 'Basic'),
@@ -58,9 +43,7 @@ class OfferDetail(models.Model):
     ]
 
     offer = models.ForeignKey(
-        Offer,
-        on_delete=models.CASCADE,
-        related_name='details'
+        Offer, on_delete=models.CASCADE, related_name='details'
     )
     title = models.CharField(max_length=255)
     revisions = models.IntegerField()
@@ -75,5 +58,9 @@ class OfferDetail(models.Model):
         unique_together = ('offer', 'offer_type')
 
     def __str__(self):
-        """Return offer title with package type."""
+        """Return offer title with package type.
+
+        Returns:
+            str: Offer title and package type.
+        """
         return f"{self.offer.title} - {self.offer_type}"

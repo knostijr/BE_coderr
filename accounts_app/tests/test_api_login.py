@@ -1,6 +1,6 @@
-"""Tests for POST /api/login/."""
+"""Tests for login API endpoint."""
 
-# Third-party
+# Third-party imports
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -9,10 +9,10 @@ User = get_user_model()
 
 
 class LoginAPITest(APITestCase):
-    """Test suite for login endpoint."""
+    """Test cases for POST /api/login/."""
 
     def setUp(self):
-        """Create test user and client."""
+        """Set up test client and user."""
         self.client = APIClient()
         self.url = '/api/login/'
         self.user = User.objects.create_user(
@@ -22,7 +22,9 @@ class LoginAPITest(APITestCase):
     def test_success_returns_200_with_token(self):
         """Test successful login returns 200 with token."""
         response = self.client.post(
-            self.url, {'username': 'testuser', 'password': 'TestPass123!'}, format='json'
+            self.url,
+            {'username': 'testuser', 'password': 'TestPass123!'},
+            format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', response.data)
@@ -30,14 +32,18 @@ class LoginAPITest(APITestCase):
     def test_wrong_password_returns_400(self):
         """Test incorrect password returns 400."""
         response = self.client.post(
-            self.url, {'username': 'testuser', 'password': 'Wrong!'}, format='json'
+            self.url,
+            {'username': 'testuser', 'password': 'Wrong!'},
+            format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_unknown_user_returns_400(self):
         """Test unknown username returns 400."""
         response = self.client.post(
-            self.url, {'username': 'nobody', 'password': 'TestPass123!'}, format='json'
+            self.url,
+            {'username': 'nobody', 'password': 'TestPass123!'},
+            format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

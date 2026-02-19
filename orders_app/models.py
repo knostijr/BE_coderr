@@ -1,24 +1,15 @@
-"""Models for order management."""
+"""Models for orders app."""
 
-# Third-party
+# Third-party imports
 from django.conf import settings
 from django.db import models
 
-# Local
+# Local imports
 from offers_app.models import OfferDetail
 
 
 class Order(models.Model):
-    """A customer order for an offer package.
-
-    Attributes:
-        customer_user (ForeignKey): Customer who placed the order.
-        business_user (ForeignKey): Business user fulfilling the order.
-        offer_detail (ForeignKey): The specific package ordered.
-        status (str): 'in_progress', 'completed', or 'cancelled'.
-        created_at (datetime): Auto-set on creation.
-        updated_at (datetime): Auto-set on update.
-    """
+    """Customer order for a specific offer package."""
 
     STATUS_CHOICES = [
         ('in_progress', 'In Progress'),
@@ -37,14 +28,10 @@ class Order(models.Model):
         related_name='orders_as_business'
     )
     offer_detail = models.ForeignKey(
-        OfferDetail,
-        on_delete=models.CASCADE,
-        related_name='orders'
+        OfferDetail, on_delete=models.CASCADE, related_name='orders'
     )
     status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='in_progress'
+        max_length=20, choices=STATUS_CHOICES, default='in_progress'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -55,5 +42,9 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        """Return order ID and status."""
+        """Return order ID and status.
+
+        Returns:
+            str: Order identifier with status.
+        """
         return f"Order #{self.id} - {self.status}"

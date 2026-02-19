@@ -1,10 +1,10 @@
-"""URL routing for offers_app API."""
+"""URL routing for offers app."""
 
-# Third-party
+# Third-party imports
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-# Local
+# Local imports
 from .views import OfferDetailViewSet, OfferViewSet
 
 app_name = 'offers_app'

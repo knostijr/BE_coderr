@@ -1,72 +1,76 @@
-"""API views for offers_app with filtering, search, and pagination."""
+"""API views for offers app."""
 
-# Third-party
+# Third-party imports
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
-# Local
+# Local imports
 from offers_app.models import Offer, OfferDetail
 
 from .filters import OfferFilter
-from .permissions import IsBusinessUser, IsOwnerOrReadOnly
+from .permissions import IsBusinessUser, IsOfferOwner
 from .serializers import (
-    OfferCreateSerializer,
+    OfferCreateUpdateSerializer,
     OfferDetailSerializer,
     OfferListSerializer,
-    OfferUpdateSerializer,
+    OfferRetrieveSerializer,
 )
 
 
 class OfferViewSet(viewsets.ModelViewSet):
-    """ViewSet for offer CRUD operations.
+    """ViewSet for offer CRUD.
 
-    list:   GET /api/offers/ - public, supports filtering
-    create: POST /api/offers/ - business users only
-    retrieve: GET /api/offers/{id}/ - auth required
-    update: PATCH /api/offers/{id}/ - owner only
-    destroy: DELETE /api/offers/{id}/ - owner only
-
-    Query parameters: creator_id, min_price, max_delivery_time,
-    search, ordering, page_size.
+    list:     GET /api/offers/ - public, paginated, filterable
+    create:   POST /api/offers/ - business users only, returns full details
+    retrieve: GET /api/offers/{id}/ - auth required, url-only details
+    update:   PATCH /api/offers/{id}/ - owner only, returns full details
+    destroy:  DELETE /api/offers/{id}/ - owner only
     """
 
     queryset = Offer.objects.all().prefetch_related('details', 'user')
-    permission_classes = [IsAuthenticatedOrReadOnly, IsBusinessUser, IsOwnerOrReadOnly]
-
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = OfferFilter
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
     ordering = ['-updated_at']
 
-    def get_serializer_class(self):
-        """Return the appropriate serializer for each action.
+    def get_permissions(self):
+        """Return permissions based on action.
 
         Returns:
-            Serializer class based on current action.
+            list: Permission instances for the current action.
         """
-        if self.action == 'create':
-            return OfferCreateSerializer
-        if self.action in ['update', 'partial_update']:
-            return OfferUpdateSerializer
-        return OfferListSerializer
+        if self.action == 'list':
+            return []
+        if self.action == 'retrieve':
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsBusinessUser(), IsOfferOwner()]
+
+    def get_serializer_class(self):
+        """Return serializer based on action.
+
+        Returns:
+            Serializer class for the current action.
+        """
+        if self.action == 'list':
+            return OfferListSerializer
+        if self.action == 'retrieve':
+            return OfferRetrieveSerializer
+        return OfferCreateUpdateSerializer
 
     def perform_create(self, serializer):
         """Save offer with current user as creator.
 
         Args:
-            serializer: Validated serializer.
+            serializer: Validated serializer instance.
         """
         serializer.save(user=self.request.user)
 
 
 class OfferDetailViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for reading individual offer packages.
-
-    retrieve: GET /api/offerdetails/{id}/ - auth required
-    """
+    """Read-only ViewSet for GET /api/offerdetails/{id}/ - auth required."""
 
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer

@@ -1,16 +1,16 @@
-"""Admin configuration for accounts_app."""
+"""Admin configuration for accounts app."""
 
-# Third-party
+# Third-party imports
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-# Local
+# Local imports
 from .models import User
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Admin interface for custom User model."""
+    """Custom admin interface for User model."""
 
     list_display = ['username', 'email', 'type', 'first_name', 'last_name']
     list_filter = ['type', 'is_staff', 'is_active']
@@ -21,5 +21,4 @@ class UserAdmin(BaseUserAdmin):
         ('Profile', {
             'fields': ('type', 'file', 'location', 'tel', 'description', 'working_hours')
         }),
-        ('Timestamps', {'fields': ('created_at', 'updated_at')}),
     )

@@ -1,6 +1,6 @@
-"""Tests for POST /api/registration/."""
+"""Tests for registration API endpoint."""
 
-# Third-party
+# Third-party imports
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -10,10 +10,10 @@ User = get_user_model()
 
 
 class RegistrationAPITest(APITestCase):
-    """Test suite for registration endpoint."""
+    """Test cases for POST /api/registration/."""
 
     def setUp(self):
-        """Set up test client and URL."""
+        """Set up test client."""
         self.client = APIClient()
         self.url = '/api/registration/'
 
@@ -41,15 +41,18 @@ class RegistrationAPITest(APITestCase):
     def test_password_mismatch_returns_400(self):
         """Test mismatched passwords return 400."""
         data = {
-            'username': 'u', 'email': 'u@test.com',
-            'password': 'TestPass123!', 'repeated_password': 'Different!'
+            'username': 'user', 'email': 'u@test.com',
+            'password': 'TestPass123!', 'repeated_password': 'Wrong!'
         }
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_missing_email_returns_400(self):
         """Test missing email returns 400."""
-        data = {'username': 'u', 'password': 'TestPass123!', 'repeated_password': 'TestPass123!'}
+        data = {
+            'username': 'user',
+            'password': 'TestPass123!', 'repeated_password': 'TestPass123!'
+        }
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -59,7 +62,7 @@ class RegistrationAPITest(APITestCase):
             username='existing', email='e@test.com', password='TestPass123!'
         )
         data = {
-            'username': 'existing', 'email': 'other@test.com',
+            'username': 'existing', 'email': 'new@test.com',
             'password': 'TestPass123!', 'repeated_password': 'TestPass123!'
         }
         response = self.client.post(self.url, data, format='json')

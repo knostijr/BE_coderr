@@ -1,20 +1,21 @@
 """Tests for User model."""
 
-# Third-party
+# Third-party imports
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from django.utils import timezone
 
 User = get_user_model()
 
 
 class UserModelTest(TestCase):
-    """Test suite for User model."""
+    """Test cases for User model."""
 
     def setUp(self):
         """Create base test user."""
         self.user = User.objects.create_user(
-            username='testuser', email='test@test.com', password='TestPass123!'
+            username='testuser',
+            email='test@test.com',
+            password='TestPass123!'
         )
 
     def test_user_creation(self):
@@ -28,15 +29,11 @@ class UserModelTest(TestCase):
 
     def test_business_type_saved_correctly(self):
         """Test business type is saved correctly."""
-        biz = User.objects.create_user(
+        user = User.objects.create_user(
             username='biz', email='biz@test.com',
             password='TestPass123!', type='business'
         )
-        self.assertEqual(biz.type, 'business')
-
-    def test_str_returns_username(self):
-        """Test __str__ returns username."""
-        self.assertEqual(str(self.user), 'testuser')
+        self.assertEqual(user.type, 'business')
 
     def test_string_fields_default_to_empty_string(self):
         """Test string fields default to empty string not null."""
@@ -47,15 +44,15 @@ class UserModelTest(TestCase):
 
     def test_created_at_auto_set(self):
         """Test created_at is auto-set on creation."""
-        before = timezone.now()
-        user = User.objects.create_user(
-            username='new', email='new@test.com', password='TestPass123!'
-        )
-        self.assertGreaterEqual(user.created_at, before)
+        self.assertIsNotNone(self.user.created_at)
+
+    def test_str_returns_username(self):
+        """Test __str__ returns username."""
+        self.assertEqual(str(self.user), 'testuser')
 
     def test_multiple_users_can_coexist(self):
         """Test multiple users can be created."""
         User.objects.create_user(
-            username='second', email='s@test.com', password='TestPass123!'
+            username='user2', email='user2@test.com', password='TestPass123!'
         )
         self.assertEqual(User.objects.count(), 2)

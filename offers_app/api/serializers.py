@@ -1,42 +1,29 @@
-"""Serializers for offers_app.
+"""Serializers for offers app."""
 
-Different serializers per use case:
-- List view: user (int), user_details, details with id+url, computed fields
-- Detail view: same structure as list
-- Create: accepts nested details (must have all 3 types)
-- Update: can update individual details by offer_type
-"""
-
-# Third-party
+# Third-party imports
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-# Local
+# Local imports
 from offers_app.models import Offer, OfferDetail
 
 User = get_user_model()
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
-    """Full serializer for OfferDetail (for create/update and offerdetails endpoint).
-
-    Fields: id, title, revisions, delivery_time_in_days, price, features, offer_type.
-    """
+    """Full OfferDetail serializer - used for create/update responses."""
 
     class Meta:
         model = OfferDetail
         fields = [
-            'id', 'title', 'revisions',
-            'delivery_time_in_days', 'price', 'features', 'offer_type'
+            'id', 'title', 'revisions', 'delivery_time_in_days',
+            'price', 'features', 'offer_type'
         ]
         read_only_fields = ['id']
 
 
-class OfferDetailLinkSerializer(serializers.ModelSerializer):
-    """Serializer that returns id and url for offer details.
-
-    Used in list and retrieve views per API spec.
-    """
+class OfferDetailURLSerializer(serializers.ModelSerializer):
+    """OfferDetail serializer returning only id and url - used for list/retrieve."""
 
     url = serializers.SerializerMethodField()
 
@@ -45,22 +32,19 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
         fields = ['id', 'url']
 
     def get_url(self, obj):
-        """Build URL path for this offer detail.
+        """Build URL for this offer detail.
 
         Args:
             obj: OfferDetail instance.
 
         Returns:
-            str: URL path.
+            str: URL path to detail endpoint.
         """
         return f"/api/offerdetails/{obj.id}/"
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
-    """Nested user info for user_details field in offer responses.
-
-    Fields: first_name, last_name, username.
-    """
+    """Nested user info for user_details field in offer list."""
 
     class Meta:
         model = User
@@ -68,17 +52,11 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 
 
 class OfferListSerializer(serializers.ModelSerializer):
-    """Serializer for offer list and detail views.
+    """Serializer for GET /api/offers/ - includes user_details and url-only details."""
 
-    Per API spec:
-    - 'user' is the user ID (int)
-    - 'user_details' is nested {first_name, last_name, username}
-    - 'details' contains objects with id and url
-    - 'min_price' and 'min_delivery_time' are computed
-    """
-
+    user = serializers.IntegerField(source='user.id', read_only=True)
     user_details = UserDetailsSerializer(source='user', read_only=True)
-    details = OfferDetailLinkSerializer(many=True, read_only=True)
+    details = OfferDetailURLSerializer(many=True, read_only=True)
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
 
@@ -89,7 +67,6 @@ class OfferListSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'details',
             'min_price', 'min_delivery_time', 'user_details'
         ]
-        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def get_min_price(self, obj):
         """Return minimum price across all packages.
@@ -110,18 +87,41 @@ class OfferListSerializer(serializers.ModelSerializer):
             obj: Offer instance.
 
         Returns:
-            int or None: Minimum delivery time.
+            int or None: Minimum delivery days.
         """
         times = obj.details.values_list('delivery_time_in_days', flat=True)
         return min(times) if times else None
 
 
-class OfferCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating a new offer with 3 packages.
+class OfferRetrieveSerializer(serializers.ModelSerializer):
+    """Serializer for GET /api/offers/{id}/ - url-only details, no user_details."""
 
-    Requires exactly 3 details: basic, standard, premium.
-    Returns full details on success.
-    """
+    user = serializers.IntegerField(source='user.id', read_only=True)
+    details = OfferDetailURLSerializer(many=True, read_only=True)
+    min_price = serializers.SerializerMethodField()
+    min_delivery_time = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Offer
+        fields = [
+            'id', 'user', 'title', 'image', 'description',
+            'created_at', 'updated_at', 'details',
+            'min_price', 'min_delivery_time'
+        ]
+
+    def get_min_price(self, obj):
+        """Return minimum price across all packages."""
+        prices = obj.details.values_list('price', flat=True)
+        return float(min(prices)) if prices else None
+
+    def get_min_delivery_time(self, obj):
+        """Return minimum delivery time across all packages."""
+        times = obj.details.values_list('delivery_time_in_days', flat=True)
+        return min(times) if times else None
+
+
+class OfferCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for POST/PATCH - nested full details in request AND response."""
 
     details = OfferDetailSerializer(many=True)
 
@@ -131,70 +131,49 @@ class OfferCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate_details(self, value):
-        """Validate that exactly 3 details with correct types are provided.
+        """Validate that exactly 3 details are provided on create.
 
         Args:
             value (list): List of detail data.
 
         Returns:
-            list: Validated details.
+            list: Validated detail data.
 
         Raises:
-            ValidationError: If not exactly 3 unique types provided.
+            serializers.ValidationError: If not exactly 3 on create.
         """
-        types = [d['offer_type'] for d in value]
-        required = {'basic', 'standard', 'premium'}
-
-        if set(types) != required or len(types) != 3:
+        if self.instance is None and len(value) != 3:
             raise serializers.ValidationError(
-                "An offer must have exactly 3 details: basic, standard, and premium."
+                "An offer must have exactly 3 details (basic, standard, premium)."
             )
         return value
 
     def create(self, validated_data):
-        """Create offer with nested details.
+        """Create offer with all nested details.
 
         Args:
-            validated_data (dict): Validated data.
+            validated_data (dict): Validated serializer data.
 
         Returns:
             Offer: Created offer instance.
         """
         details_data = validated_data.pop('details')
         offer = Offer.objects.create(**validated_data)
-
         for detail_data in details_data:
             OfferDetail.objects.create(offer=offer, **detail_data)
-
         return offer
 
-
-class OfferUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for updating an offer and its packages.
-
-    Details are identified by offer_type and updated individually.
-    Returns full details after update.
-    """
-
-    details = OfferDetailSerializer(many=True, required=False)
-
-    class Meta:
-        model = Offer
-        fields = ['id', 'title', 'image', 'description', 'details']
-        read_only_fields = ['id']
-
     def update(self, instance, validated_data):
-        """Update offer and optionally update individual packages.
+        """Update offer and optionally update details by offer_type.
 
         Args:
-            instance: Offer to update.
-            validated_data (dict): Validated data.
+            instance: Existing Offer instance.
+            validated_data (dict): Validated serializer data.
 
         Returns:
             Offer: Updated offer instance.
         """
         details_data = validated_data.pop('details', [])
-
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
         if 'image' in validated_data:

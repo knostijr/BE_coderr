@@ -1,6 +1,6 @@
-"""API views for authentication and profile management."""
+"""API views for authentication and user profiles."""
 
-# Third-party
+# Third-party imports
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
@@ -8,8 +8,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# Local
-from .permissions import IsOwnerOrReadOnly
+# Local imports
+from .permissions import IsProfileOwner
 from .serializers import LoginSerializer, RegistrationSerializer, UserProfileSerializer
 
 User = get_user_model()
@@ -40,7 +40,7 @@ class RegistrationView(APIView):
             'token': token.key,
             'username': user.username,
             'email': user.email,
-            'user_id': user.id
+            'user_id': user.id,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -79,25 +79,25 @@ class LoginView(APIView):
             'token': token.key,
             'username': user.username,
             'email': user.email,
-            'user_id': user.id
+            'user_id': user.id,
         }, status=status.HTTP_200_OK)
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
-    """ViewSet for profile operations.
+    """ViewSet for profile retrieve and update.
 
-    GET    /api/profile/{id}/  - retrieve profile (auth required)
-    PATCH  /api/profile/{id}/  - update own profile (owner only)
+    GET   /api/profile/{pk}/ - retrieve profile (auth required)
+    PATCH /api/profile/{pk}/ - update own profile (owner only)
     """
 
     queryset = User.objects.all()
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticated, IsProfileOwner]
     http_method_names = ['get', 'patch', 'head', 'options']
 
 
 class ProfileBusinessListView(APIView):
-    """Handle GET /api/profiles/business/ - auth required."""
+    """Handle GET /api/profiles/business/ - direct array, no pagination."""
 
     permission_classes = [IsAuthenticated]
 
@@ -116,7 +116,7 @@ class ProfileBusinessListView(APIView):
 
 
 class ProfileCustomerListView(APIView):
-    """Handle GET /api/profiles/customer/ - auth required."""
+    """Handle GET /api/profiles/customer/ - direct array, no pagination."""
 
     permission_classes = [IsAuthenticated]
 
