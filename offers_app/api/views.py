@@ -4,6 +4,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
 # Local imports
@@ -30,6 +31,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Offer.objects.all().prefetch_related('details', 'user')
+    pagination_class = PageNumberPagination 
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = OfferFilter
     search_fields = ['title', 'description']
