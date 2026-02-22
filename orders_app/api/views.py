@@ -100,6 +100,24 @@ class OrderViewSet(viewsets.ModelViewSet):
         create_serializer.is_valid(raise_exception=True)
         order = create_serializer.save()
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Update order status and return full order data.
+
+        Args:
+            request: HTTP request with status field.
+
+        Returns:
+            Response: Full order data with 200 status.
+        """
+        instance = self.get_object()
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        # Return full order data using OrderSerializer (all fields)
+        return Response(OrderSerializer(instance).data)
 
 
 class OrderCountView(APIView):
