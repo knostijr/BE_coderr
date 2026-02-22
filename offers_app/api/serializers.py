@@ -132,6 +132,8 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate_details(self, value):
         """Validate that exactly 3 details are provided on create.
+        
+        For updates, validate that all details include offer_type field.
 
         Args:
             value (list): List of detail data.
@@ -140,12 +142,22 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
             list: Validated detail data.
 
         Raises:
-            serializers.ValidationError: If not exactly 3 on create.
+            serializers.ValidationError: If validation fails.
         """
+        # On create: require exactly 3 details
         if self.instance is None and len(value) != 3:
             raise serializers.ValidationError(
                 "An offer must have exactly 3 details (basic, standard, premium)."
             )
+        
+        # On update: validate that offer_type is present in each detail
+        if self.instance is not None:
+            for detail_data in value:
+                if 'offer_type' not in detail_data or not detail_data['offer_type']:
+                    raise serializers.ValidationError(
+                        "Each detail must include 'offer_type' field (basic, standard, or premium) to identify which package to update."
+                    )
+        
         return value
 
     def create(self, validated_data):
@@ -180,8 +192,9 @@ class OfferCreateUpdateSerializer(serializers.ModelSerializer):
             instance.image = validated_data['image']
         instance.save()
 
+        # Update details - offer_type is guaranteed to exist due to validate_details(
         for detail_data in details_data:
-            offer_type = detail_data.get('offer_type')
+            offer_type = detail_data['offer_type']
             OfferDetail.objects.filter(
                 offer=instance, offer_type=offer_type
             ).update(**{k: v for k, v in detail_data.items() if k != 'offer_type'})
