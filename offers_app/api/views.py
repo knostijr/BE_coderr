@@ -20,6 +20,14 @@ from .serializers import (
 )
 
 
+class OfferPagination(PageNumberPagination):
+    """Custom pagination class for offers with page_size query parameter support."""
+    
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class OfferViewSet(viewsets.ModelViewSet):
     """ViewSet for offer CRUD.
 
@@ -31,7 +39,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Offer.objects.all().prefetch_related('details', 'user')
-    pagination_class = PageNumberPagination 
+    pagination_class = OfferPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = OfferFilter
     search_fields = ['title', 'description']
